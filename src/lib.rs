@@ -68,6 +68,7 @@ pub mod old {
         }
     }
     /// Takes in an enum and a struct that implements a type marker using
+    #[derive(Debug)]
     pub struct Not<T: VariantArray + Debug, E>(T, PhantomData<E>);
     impl<'a, T, E> Arbitrary<'a> for Not<T, E>
     where
