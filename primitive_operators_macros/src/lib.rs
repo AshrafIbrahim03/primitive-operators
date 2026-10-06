@@ -1,13 +1,13 @@
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{format_ident, quote};
+use syn::punctuated::Punctuated;
 use syn::{
     Ident, LitStr, Result, Token, Type, Visibility, bracketed,
     parse::{Parse, ParseStream},
     parse_macro_input,
     token::Bracket,
 };
-use syn::{Path, braced, punctuated::Punctuated};
 
 struct InsensitiveTypeInput {
     visibility: Visibility,
