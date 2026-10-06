@@ -1,4 +1,11 @@
+use std::marker::PhantomData;
+
 use arbitrary::{Arbitrary, Unstructured};
+
+#[cfg(feature = "macros")]
+pub use primitive_operators_macros;
+
+pub mod operators;
 
 // The idea with these two traits is that they can produce an arbitrary type. This is basically
 // another set of types that produce other types. Ideally they wouldn't be interacted with directly,
@@ -36,77 +43,100 @@ impl<'a, I: Insensitive> Arbitrary<'a> for CaseInsensitiveString<I> {
     }
 }
 
+/// Trait that describes what enum variants to exclude.
+pub trait Inclusion<T> {
+    /// Indicates whether the input is a valid variant to be generated using `arbitrary::Arbitrary`.
+    /// Returns true if the input is a legal type variant
+    /// Returns false if the input is not a legal type variant
+    fn includes(value: &T) -> bool;
+}
 
-    /// Takes in two Exclusions and computes the OR between their `includes` functions
-    pub struct Or<A, B>(PhantomData<(A, B)>);
-    impl<T, A, B> Inclusion<T> for Or<A, B>
-    where
-        A: Inclusion<T>,
-        B: Inclusion<T>,
-    {
-        fn includes(value: &T) -> bool {
-            A::includes(value) || B::includes(value)
-        }
-    }
+#[cfg(test)]
+mod test {
+    /// The number of times to iterate and test that an exclusion/inclusion works before assuming
+    /// that it works on all cases
+    const TIMES: usize = 1000;
+    use std::fmt::Display;
 
-    /// Takes in two Exclusions and computes the AND between their `includes` functions
-    pub struct And<A, B>(PhantomData<(A, B)>);
-    impl<T, A, B> Inclusion<T> for And<A, B>
-    where
-        A: Inclusion<T>,
-        B: Inclusion<T>,
-    {
-        fn includes(value: &T) -> bool {
-            A::includes(value) && B::includes(value)
-        }
-    }
+    use arbitrary::{Arbitrary, Unstructured};
+    use primitive_operators_macros::not;
+    use rand::{Rng, rng};
+    use strum_macros::VariantArray;
 
-    /// Takes in two Exclusions and computes the XOR between their `includes` functions
-    pub struct XOr<A, B>(PhantomData<(A, B)>);
-    impl<T, A, B> Inclusion<T> for XOr<A, B>
-    where
-        A: Inclusion<T>,
-        B: Inclusion<T>,
-    {
-        fn includes(value: &T) -> bool {
-            A::includes(value) ^ B::includes(value)
-        }
-    }
-    /// Takes in an enum and a struct that implements a type marker using
-    #[derive(Debug)]
-    pub struct Not<T: VariantArray + Debug, E>(T, PhantomData<E>);
-    impl<'a, T, E> Arbitrary<'a> for Not<T, E>
-    where
-        T: VariantArray + PartialEq + Copy + Debug,
-        E: Inclusion<T>,
-    {
-        fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-            let vars: Vec<T> = T::VARIANTS
-                .iter()
-                .copied()
-                .filter(|t| !E::includes(t))
-                .collect();
-            let &var = u.choose(&vars)?;
-            Ok(Not(var, PhantomData))
-        }
-    }
+    use crate::{
+        Inclusion,
+        operators::{Not, Only},
+    };
 
-    impl<T, E> PartialEq<T> for Not<T, E>
-    where
-        T: VariantArray + PartialEq + Copy + Display + Debug,
-        E: Inclusion<T>,
-    {
-        fn eq(&self, &other: &T) -> bool {
-            self.0 == other
-        }
+    #[derive(PartialEq, Arbitrary, VariantArray, Copy, Clone, Debug)]
+    enum Bruh {
+        Dude,
+        Guy,
+        Fr,
+        Helen,
     }
-    impl<T, E> Display for Not<T, E>
-    where
-        T: VariantArray + PartialEq + Copy + Display + Debug,
-        E: Inclusion<T>,
-    {
+    impl Display for Bruh {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            Display::fmt(&self.0, f)
+            f.write_str(match self {
+                Bruh::Dude => "Dude",
+                Bruh::Guy => "Guy",
+                Bruh::Fr => "Fr",
+                Bruh::Helen => "Helen",
+            })
+        }
+    }
+    #[derive(Debug)]
+    struct DudeFilter;
+    impl Inclusion<Bruh> for DudeFilter {
+        fn includes(&value: &Bruh) -> bool {
+            value == Bruh::Dude
+        }
+    }
+
+    /// Tests the `Not` struct without using the macro
+    #[test]
+    fn not_direct_test() {
+        for _ in 0..TIMES {
+            let mut bytes = [0u8; 10];
+            rng().fill_bytes(&mut bytes);
+            let b: Not<Bruh, DudeFilter> = Not::arbitrary(&mut Unstructured::new(&bytes)).unwrap();
+            assert_ne!(b, Bruh::Dude)
+        }
+    }
+    /// Tests the `Only` struct without using the macro
+    #[test]
+    fn only_direct_test() {
+        for _ in 0..TIMES {
+            let mut bytes = [0u8; 10];
+            rng().fill_bytes(&mut bytes);
+            let b: Only<Bruh, DudeFilter> =
+                Only::arbitrary(&mut Unstructured::new(&bytes)).unwrap();
+            assert_eq!(b, Bruh::Dude)
+        }
+    }
+
+    /// Tests the `Only` struct with using the macro
+    #[test]
+    fn only_macro_test() {
+        for _ in 0..TIMES {
+            let mut bytes = [0u8; 10];
+            rng().fill_bytes(&mut bytes);
+            //let b:  = USE ONLY MACRO HERE
+            //assert_eq!(b, Bruh::Dude)
+        }
+    }
+
+    #[test]
+    fn not_macro() {
+        not!(NotDude = Bruh except Dude);
+
+        for _ in 0..TIMES {
+            let mut bytes = [0u8; 10];
+            rng().fill_bytes(&mut bytes);
+            assert_ne!(
+                NotDude::arbitrary(&mut Unstructured::new(&bytes)).unwrap(),
+                Bruh::Dude
+            );
         }
     }
 }
