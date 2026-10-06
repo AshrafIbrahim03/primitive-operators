@@ -4,6 +4,7 @@ use arbitrary::{Arbitrary, Unstructured};
 
 #[cfg(feature = "macros")]
 pub use primitive_operators_macros;
+use primitive_operators_macros::not;
 
 pub mod operators;
 

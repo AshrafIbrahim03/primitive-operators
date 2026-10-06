@@ -19,6 +19,7 @@ impl<T> Inclusion<T> for False<T> {
     }
 }
 /// Takes in two Inclusions and computes the OR between their `includes` functions
+#[derive(Debug)]
 pub struct Or<T, A, B>(pub T, PhantomData<(A, B)>);
 impl<T, A, B> Inclusion<T> for Or<T, A, B>
 where
@@ -27,6 +28,14 @@ where
 {
     fn includes(value: &T) -> bool {
         A::includes(value) || B::includes(value)
+    }
+}
+impl<T, A, B> Display for Or<T, A, B>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }
 impl<'a, T, A, B> Arbitrary<'a> for Or<T, A, B>
@@ -55,6 +64,7 @@ where
 }
 
 /// Takes in two Inclusions and computes the AND between their `includes` functions
+#[derive(Debug)]
 pub struct And<T, A, B>(pub T, PhantomData<(A, B)>);
 impl<T, A, B> Inclusion<T> for And<T, A, B>
 where
@@ -81,6 +91,14 @@ where
     }
 }
 
+impl<T, A, B> Display for And<T, A, B>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
 impl<T, A, B> PartialEq<T> for And<T, A, B>
 where
     T: PartialEq,
@@ -98,6 +116,7 @@ where
     }
 }
 /// Takes in two Inclusions and computes the XOR between their `includes` functions
+#[derive(Debug)]
 pub struct XOr<T, A, B>(pub T, PhantomData<(A, B)>);
 impl<T, A, B> Inclusion<T> for XOr<T, A, B>
 where
@@ -121,6 +140,15 @@ where
             .filter(|v| A::includes(v) ^ B::includes(v))
             .collect();
         Ok(Self(u.choose_iter(allowed.into_iter())?, PhantomData))
+    }
+}
+
+impl<T, A, B> Display for XOr<T, A, B>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }
 impl<T, A, B> PartialEq<T> for XOr<T, A, B>
