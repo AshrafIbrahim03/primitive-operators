@@ -1,0 +1,1 @@
+std::result::Result<ExcludedVariants, syn::Error>: std::convert::From<syn::punctuated::Punctuated<proc_macro2::Ident, syn::token::Comma>>
