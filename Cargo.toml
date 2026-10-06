@@ -2,7 +2,7 @@
 name = "primitive_operators"
 version = "0.1.0"
 edition = "2024"
-license = "GPLv3"
+license-file = "LICENSE.md"
 keywords = ["arbitrary", "fuzzing", "operators"]
 description = "Operators for constraining arbitrary types."
 repository = "https://github.com/AshrafIbrahim03/primitive-operators"
