@@ -12,25 +12,30 @@ pub trait Generate {
     fn generate<'b>(u: &mut Unstructured<'_>) -> arbitrary::Result<Self::Output<'b>>;
 }
 
-// These types are interoperable with Arbitrary, being their own types but impl PartialEq<T> where T
-// is the type they're wrapping. This would also need a macro system to not be so verbose.
-//
-pub mod old {
-    use std::{
-        fmt::{Debug, Display},
-        marker::PhantomData,
-    };
+pub trait Insensitive {
+    const STR: &'static str;
+}
+/// Given a string to start with, will randomize the cases of each alphabetic character in the string on a call to arbitrary
+pub struct CaseInsensitiveString<I: Insensitive>(pub String, PhantomData<I>);
 
-    use arbitrary::Arbitrary;
-    use strum::VariantArray;
-
-    /// Trait that describes what enum variants to exclude.
-    pub trait Inclusion<T> {
-        /// Indicates whether the input is a valid variant to be generated using `arbitrary::Arbitrary`.
-        /// Returns true if the input is a legal type variant
-        /// Returns false if the input is not a legal type variant
-        fn includes(value: &T) -> bool;
+impl<'a, I: Insensitive> Arbitrary<'a> for CaseInsensitiveString<I> {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        let mut res = String::with_capacity(I::STR.len());
+        for c in I::STR.chars() {
+            if !c.is_alphabetic() {
+                res.push(c);
+                continue;
+            }
+            if u.arbitrary()? {
+                res.extend(c.to_uppercase());
+            } else {
+                res.extend(c.to_lowercase());
+            }
+        }
+        Ok(CaseInsensitiveString(res, PhantomData))
     }
+}
+
 
     /// Takes in two Exclusions and computes the OR between their `includes` functions
     pub struct Or<A, B>(PhantomData<(A, B)>);
