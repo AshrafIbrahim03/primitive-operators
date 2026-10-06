@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use arbitrary::{Arbitrary, Unstructured};
-use primitive_operators::old::{Inclusion, Not};
+use primitive_operators::{Inclusion, operators::Only};
 use rand::{Rng, rng};
 use strum_macros::VariantArray;
 
@@ -23,8 +23,8 @@ impl Display for Bruh {
     }
 }
 #[derive(Debug)]
-struct ExcludeDude;
-impl Inclusion<Bruh> for ExcludeDude {
+struct DudeFilter;
+impl Inclusion<Bruh> for DudeFilter {
     fn includes(&value: &Bruh) -> bool {
         value == Bruh::Dude
     }
@@ -32,6 +32,6 @@ impl Inclusion<Bruh> for ExcludeDude {
 fn main() {
     let mut bytes = [0u8; 10];
     rng().fill_bytes(&mut bytes);
-    let b: Not<Bruh, ExcludeDude> = Not::arbitrary(&mut Unstructured::new(&bytes)).unwrap();
+    let b: Only<Bruh, DudeFilter> = Only::arbitrary(&mut Unstructured::new(&bytes)).unwrap();
     assert_ne!(b, Bruh::Dude)
 }
