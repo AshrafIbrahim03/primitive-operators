@@ -216,6 +216,14 @@ where
 #[derive(Debug)]
 pub struct Only<T, E>(pub T, PhantomData<E>);
 
+impl<T, E> Inclusion<T> for Only<T, E>
+where
+    E: Inclusion<T>,
+{
+    fn includes(value: &T) -> bool {
+        E::includes(value)
+    }
+}
 impl<'a, T, E> Arbitrary<'a> for Only<T, E>
 where
     T: VariantArray + Copy,
