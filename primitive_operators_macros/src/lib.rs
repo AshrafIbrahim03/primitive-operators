@@ -71,36 +71,6 @@ pub fn insensitive_type(input: TokenStream) -> TokenStream {
     .into()
 }
 
-struct IncludeVariantsInput {
-    visibility: Visibility,
-    output_name: Ident,
-    enum_path: Path,
-    variants: Punctuated<Ident, Token![,]>,
-}
-
-impl Parse for IncludeVariantsInput {
-    fn parse(input: ParseStream<'_>) -> Result<Self> {
-        let visibility = input.parse()?;
-        let output_name = input.parse()?;
-
-        input.parse::<Token![=]>()?;
-
-        let enum_path = input.parse()?;
-
-        let content;
-        braced!(content in input);
-
-        let variants = content.parse_terminated(Ident::parse, Token![,])?;
-
-        Ok(Self {
-            visibility,
-            output_name,
-            enum_path,
-            variants,
-        })
-    }
-}
-
 mod kw {
     syn::custom_keyword!(except);
     syn::custom_keyword!(only);
