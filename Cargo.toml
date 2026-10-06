@@ -15,7 +15,7 @@ macros = []
 arbitrary = { version = "1.4.2", features = ["derive"] }
 strum = "0.28.0"
 strum_macros = "0.28.0"
-primitive_operators_macros = { version = "0.1.0", path = "primitive_operators_macros" }
+primitive_operators_macros = { version = "0.1.0", path = "./primitive_operators_macros" }
 
 [dev-dependencies]
 rand = "0.10.3"
